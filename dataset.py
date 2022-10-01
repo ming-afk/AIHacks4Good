@@ -21,9 +21,19 @@ class RFW_CB_Dataset(Dataset):
     paths = list()
     label = dict()
 
-    def __init__(self, paths, labels):
-        self.label= labels
-        self.paths = paths
+    def __init__(self, csv_file, root_dir, transform=None):
+        self.landmarks_frame = pd.read_csv(csv_file)
+        self.root_dir = root_dir
+        self.transform = transform
+
+        def __len__(self):
+            return len(self.landmarks_frame)
+
+        def __getitem__(self, idx):
+            if torch.is_tensor(idx):
+                idx = idx.tolist()
+
+            img_name = os.path.join(self.root_dir, self.landmarks_frame)
 
 def get_labels(race:str, ratio:float):
     # takes the ratio to divide  training/tst set
