@@ -3,13 +3,14 @@ from torchvision.io import read_image
 import torch
 import pandas as pd
 from http.client import FOUND
-from torch.utils.data import Dataset
+from torch.utils.data import Dataset, DataLoader
 
 # from deepface import DeepFace
 # import cv2
 import random
 random.seed(10)
 import os
+from skimage import io
 import regex as re
 import json
 import pandas as pd
@@ -22,19 +23,32 @@ class RFW_CB_Dataset(Dataset):
     label = dict()
 
     def __init__(self, csv_file, root_dir, transform=None):
-        self.landmarks_frame = pd.read_csv(csv_file)
+        self.faces = pd.read_csv(csv_file)
         self.root_dir = root_dir
         self.transform = transform
 
-        def __len__(self):
-            return len(self.landmarks_frame)
+    def __len__(self):
+        return len(self.faces)
 
-        def __getitem__(self, idx):
-            if torch.is_tensor(idx):
-                idx = idx.tolist()
+    def __getitem__(self, idx):
+        if torch.is_tensor(idx):
+            idx = idx.tolist()
+        # print(self.faces.iloc[idx, 0])
+        img1_name = os.path.join(self.root_dir, eval(self.faces.iloc[idx, 1])[0])
+        img2_name = os.path.join(self.root_dir, eval(self.faces.iloc[idx, 1])[1])
 
-            img_name = os.path.join(self.root_dir, self.landmarks_frame)
+        images = [io.imread(img1_name), io.imread(img2_name)]
+        
+        label = self.faces.iloc[idx, 2]
+        label = label.astype('float')
 
+        sample = {'image': images, 'label':label}
+
+        if self.transform:
+            sample = self.transform(sample)
+
+        return sample
+            
 def get_labels(race:str, ratio:float):
     # takes the ratio to divide  training/tst set
     # then iterate the data with people of race "race" then return the train/test set and labels 
@@ -77,61 +91,35 @@ def get_labels(race:str, ratio:float):
                 path2.append("data/" + race + "/" + img2 + "/" + img2+"_000" + str(id2) + ".jpg")
                 labels.append(label)
 
-        # print("extracting finished")
-        # df['path1'] = path1
-        # df['path2'] = path2
-        # df['label'] = labels      
-
-        # rarr = list()
-        # for i in range(len(df)):
-        #     rarr.append(random.uniform(0,1))
-        
-        # trarr = rarr[:int(len(df) * ratio)]
-        # while len(trarr) < len(df):
-        #     trarr.append(0)
-
-        # while len(tstarr) < len(df):
-        #     tstarr.append(0)
-
-        # tstarr = rarr[int(len(df)* ratio):]
-
-
         path_pair = list(zip(path1, path2))
         
         label_di = dict(zip(list(path_pair), labels))
 
-        return (path_pair, label_di)
+        df = pd.DataFrame({key: [] for key in ["id", "label"]})
+        df["id"] = path_pair
+        df['label'] = labels
+
+        df.to_csv(race + "_dataset.csv")
 
 
 
 if __name__=="__main__":
-    # img = load_image("image/IMG_0084.jpg")
-	# base_img = img.copy()
 
-    # img = cv2.imread(os.path.expanduser("~/Downloads/deepface/image/pexels-photo-2379005.jpeg"))
-    # cv2.namedWindow("Images")
-    # cv2.imshow('Images',img)
-    # cv2.waitKey(1)
-
-    # false_poitive()/Users/minghaoli/Downloads/fairface-img-margin025-trainval/train
-
-    # res = DeepFace.analyze("/Users/minghaoli/Downloads/deepface/Face_Recognition/UTKFace/96_1_1_20170110183853718.jpg.chip.jpg", enforce_detection=False)
-    # print(type(res))
-    # print(res)
-
-    # verify()
-    # analyze()
-    # partition_gender_race()
+  
     race = "Asian"
-    (path_pair, label) = get_labels("Asian", 0.8)    
-   
-    df = pd.DataFrame({key: [] for key in ["id", "label"]})
-    df["id"] = path_pair
-    df['label'] = label
+    get_labels("Asian", 0.8)    
 
-    df.to_csv(race + "_dataset.csv")
+    dl = RFW_CB_Dataset(race + "_dataset.csv", ".")
+    dataloader = DataLoader(dl, batch_size=16)
 
+    for item in dataloader:
+        print(item)
+        
+
+
+    # validify data partitioning
     # for key, val in label.items():
     #     print('a')
     #     assert(key[0].split("/")[2] == key[1].split("/")[2]) == val
 
+    
