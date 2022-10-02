@@ -3,6 +3,8 @@ As the scope of applying machine learning is fast-growing nowadays, more and mor
 
 We specifically targeted Facial Recognition (FR) algorithm, for its variety in use cases and inherit sensitivity of biometric information. 
 
+This work is inspired by [VOS: Learning What You Don’t Know by Virtual Outlier Synthesis](https://github.com/deeplearning-wisc/vos). Parts of the code for the models and training in this project was modified from their work. 
+
 ## What it does
 The project is to address one of the ethical issues with Facial Recognition -- the biased behavior of machine learning algorithms regarding different races. The primary objective is to reduce false positive rate of prediction for dataset of colored individuals while keeping the model accuracy before applying debiasing architecture.  
 
