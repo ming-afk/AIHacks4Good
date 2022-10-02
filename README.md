@@ -9,6 +9,8 @@ The project is to address one of the ethical issues with Facial Recognition -- t
 ## How we built it
 We first researched the reason of racial bias in FR. In summary, demographic distribution of users of FR technology is the primary cause of this. Then, we brainstormed to propose a model that requires no significant re-training of already developed state-of-the-art by merging the results of models with different performance metrics judging by the confidence score of each. Next, to simulate the mitigation of such issues, we trained a neural network on a image recognition dataset, CIFAR100 (due to time constraints) using Pytorch library to practice the model we developed. 
 
+Dataset used: CIFAR100 (https://www.cs.toronto.edu/~kriz/cifar.html), CTK_CB
+
 ## Challenges we ran into
 1. That the accuracy of the model is very hard to achieve within 24 hours. We chose to move from the high-level task of facial recognition to item recognition to reduce the training time of our model. 
 
