@@ -15,25 +15,47 @@ import regex as re
 import json
 import pandas as pd
 import shutil
+from sklearn.utils import shuffle
 
 class RFW_CB_Dataset(Dataset):
     base = "data/txts"
     data = ""
     paths = list()
     label = dict()
+    
 
-    def __init__(self, csv_file, root_dir, transform=None):
-        self.faces = pd.read_csv(csv_file)
+    def __init__(self, ratio:list, root_dir, transform=None):
+         # ratio: [afr, asi, cau, ind]
+        for i in ratio:
+            assert 0<=i and i<=1
+
+        self.afr = pd.read_csv("African_dataset.csv")
+        self.afr = self.afr.sample(frac = ratio[0], replace = False, random_state=10)
+
+        self.asi = pd.read_csv("Asian_dataset.csv")
+        self.asi = self.asi.sample(frac = ratio[1], replace=False, random_state=10)
+
+        self.cau = pd.read_csv("Caucasian_dataset.csv")
+        self.cau = self.cau.sample(frac=ratio[2], replace=False, random_state=10)
+
+        self.ind = pd.read_csv("Indian_dataset.csv")
+        self.ind = self.ind.sample(frac=ratio[3], replace=False, random_state=10)
+
+        self.faces = pd.concat([self.afr, self.asi, self.cau, self.ind], axis=0)
+        self.faces = shuffle(self.faces)
+        # self.faces.drop("Unnamed: 0")
+        self.faces.to_excel("faces.xlsx", index=False)
         self.root_dir = root_dir
         self.transform = transform
 
     def __len__(self):
+        # all four datasets have same length of 6000
         return len(self.faces)
 
     def __getitem__(self, idx):
         if torch.is_tensor(idx):
             idx = idx.tolist()
-        # print(self.faces.iloc[idx, 0])
+
         img1_name = os.path.join(self.root_dir, eval(self.faces.iloc[idx, 1])[0])
         img2_name = os.path.join(self.root_dir, eval(self.faces.iloc[idx, 1])[1])
 
@@ -49,7 +71,7 @@ class RFW_CB_Dataset(Dataset):
 
         return sample
             
-def get_labels(race:str, ratio:float):
+def get_single_race_labels(race:str, ratio:float):
     # takes the ratio to divide  training/tst set
     # then iterate the data with people of race "race" then return the train/test set and labels 
         data = "data/txts/" + race
@@ -63,9 +85,7 @@ def get_labels(race:str, ratio:float):
         with open(data+"/"+race+"_pairs.txt", "r") as f:
             # count = 0
             for row in f.readlines():
-                # count += 1
-                # if count == 10:
-                #     break
+            
                 row = row.replace("\n", "").split("\t")
                 label = 1
                 id1 = ""
@@ -106,16 +126,21 @@ def get_labels(race:str, ratio:float):
 if __name__=="__main__":
 
   
-    race = "Asian"
-    get_labels("Asian", 0.8)    
+    # race = "African"
+    get_single_race_labels("Asian", 0.8)
+    get_single_race_labels("African", 0.8)    
+    get_single_race_labels("Caucasian",0.8)
+    get_single_race_labels("Indian",0.8)
 
-    dl = RFW_CB_Dataset(race + "_dataset.csv", ".")
-    dataloader = DataLoader(dl, batch_size=16)
-
+    # use list to set portions of each race data
+    dl = RFW_CB_Dataset([0.1, 0.1, 0.1, 0.1], ".")
+    dataloader = DataLoader(dl, batch_size = 16)
+    count = 0
     for item in dataloader:
-        print(item)
-        
-
+        # print('reached')
+        count += 1
+        # print(item)
+    # print(count)
 
     # validify data partitioning
     # for key, val in label.items():

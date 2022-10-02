@@ -3,3 +3,6 @@ venv
 Asian_dataset.csv
 data.txt
 output.txt
+African_dataset.csv
+Caucasian_dataset.csv
+Indian_dataset.csv
